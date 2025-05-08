@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Traductor de Alarmas FMC</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    textarea, pre {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+      font-family: monospace;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .output {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h2>Traductor de Alarmas FMC</h2>
+  <p>Pegá aquí las líneas con tabulación (con o sin encabezados):</p>
+  <textarea id="input" rows="12" placeholder="Pegar líneas aquí..."></textarea>
+  <button onclick="procesar()">Procesar</button>
+  <button onclick="descargar('txt')">Descargar .txt</button>
+  <button onclick="descargar('csv')">Descargar .csv</button>
+  
+  <h3>Resultado:</h3>
+  <div class="output" id="output"></div>
+
+  <script>
+    let resultadosGlobal = [];
+
+    function procesar() {
+      const input = document.getElementById('input').value.trim();
+      if (!input) return;
+
+      const lineas = input.split('\n');
+      const primera = lineas[0].split('\t');
+
+      const tieneHeaders = primera.includes('First_FMC');
+      resultadosGlobal = [];
+
+      if (tieneHeaders) {
+        const headers = primera;
+        const idxFecha     = headers.indexOf("First_FMC");
+        const idxClear     = headers.indexOf("CLEARFIRSTOCCURRENCE");
+        const idxNodo      = headers.indexOf("nodo");
+        const idxAlerta    = headers.indexOf("Alerta");
+        const idxSeveridad = headers.indexOf("SEVERITY");
+        const idxTicket    = headers.indexOf("TT_ICD");
+
+        const registros = lineas.slice(1);
+        for (let linea of registros) {
+          const campos = linea.split('\t');
+          const fecha     = campos[idxFecha]     || '';
+          const clear     = campos[idxClear]     || '';
+          const nodo      = campos[idxNodo]      || '';
+          const alerta    = campos[idxAlerta]    || '';
+          const severidad = campos[idxSeveridad] || '';
+          const ticket    = campos[idxTicket]    || '';
+          resultadosGlobal.push(`${fecha} | ${clear} | ${nodo} | ${alerta} | ${severidad} | ${ticket}`);
+        }
+
+      } else {
+        for (let linea of lineas) {
+          const campos = linea.split('\t');
+          const fecha     = campos[0]  || '';
+          const clear     = campos[1]  || '';
+          const nodo      = campos[26] || '';
+          const alerta    = campos[27] || '';
+          const severidad = campos[23] || '';
+          const ticket    = campos[25] || '';
+          resultadosGlobal.push(`${fecha} | ${clear} | ${nodo} | ${alerta} | ${severidad} | ${ticket}`);
+        }
+      }
+
+      document.getElementById('output').textContent = resultadosGlobal.join('\n');
+    }
+
+    function descargar(formato) {
+      if (!resultadosGlobal.length) return alert("Primero procesá los datos.");
+      let contenido = "";
+      let tipo = "";
+      let nombre = "";
+
+      if (formato === 'txt') {
+        contenido = resultadosGlobal.join('\n');
+        tipo = 'text/plain';
+        nombre = 'alarmas.txt';
+      } else if (formato === 'csv') {
+        contenido = 'Fecha,Clear,Nodo,Alerta,Severidad,Ticket\n' + resultadosGlobal.map(linea => {
+          return linea.split(' | ').map(valor => `"${valor}"`).join(',');
+        }).join('\n');
+        tipo = 'text/csv';
+        nombre = 'alarmas.csv';
+      }
+
+      const blob = new Blob([contenido], { type: tipo });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nombre;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
