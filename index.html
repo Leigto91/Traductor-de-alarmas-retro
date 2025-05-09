@@ -1,51 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Traductor de Alarmas FMC</title>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    textarea { width: 100%; height: 200px; margin-bottom: 10px; }
-    button { padding: 10px 20px; }
-    pre { background: #f0f0f0; padding: 10px; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Traductor de Alarmas FMC</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        textarea { width: 100%; height: 200px; margin-bottom: 10px; }
+        button { padding: 10px 20px; }
+        pre { background: #f0f0f0; padding: 10px; }
+    </style>
 </head>
 <body>
-  <h2>Traductor de Alarmas FMC</h2>
-  <p>Pegá los datos con encabezados desde Excel:</p>
-  <textarea id="input" placeholder="Pegar aquí los datos..."></textarea>
-  <button onclick="procesar()">Procesar</button>
-  <h3>Resultado:</h3>
-  <pre id="output"></pre>
+    <h2>Traductor de Alarmas FMC</h2>
+    <p>Pegá los datos con encabezados desde Excel:</p>
+    <textarea id="input" placeholder="Pegar aquí los datos..."></textarea>
+    <button onclick="procesar()">Procesar</button>
+    <p>Estructura:<br>Fecha | Fechar del Clear | Nodo | Alerta | Severidad | Ticket</p>
+    <h3>Resultado:</h3>
+    <pre id="output"></pre>
 
-  <script>
-    function procesar() {
-      const input = document.getElementById("input").value.trim();
-      const output = document.getElementById("output");
-      const lines = input.split(/\r?\n/);
-      if (lines.length < 2) {
-        output.textContent = "Debe incluir encabezados y al menos una línea de datos.";
-        return;
-      }
+    <script>
+        function procesar() {
+            const input = document.getElementById("input").value.trim();
+            const output = document.getElementById("output");
+            const lines = input.split(/\r?\n/);
+            if (lines.length < 2) {
+                output.textContent = "Debe incluir encabezados y al menos una línea de datos.";
+                return;
+            }
 
-      const headers = lines[0].split("\t");
-      const campos = ["First_FMC", "CLEARFIRSTOCCURRENCE", "nodo", "Alerta_Norm", "SEVERITY", "TT_ICD"];
-      const indices = campos.map(campo => headers.indexOf(campo));
+            const headers = lines[0].split("\t");
+            const campos = ["First_FMC", "CLEARFIRSTOCCURRENCE", "nodo", "Alerta_Norm", "SEVERITY", "TT_ICD"];
+            const indices = campos.map(campo => headers.indexOf(campo));
 
-      if (indices.includes(-1)) {
-        output.textContent = "Faltan uno o más campos requeridos en los encabezados.";
-        return;
-      }
+            if (indices.includes(-1)) {
+                output.textContent = "Faltan uno o más campos requeridos en los encabezados.";
+                return;
+            }
 
-      const resultados = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split("\t");
-        const fila = indices.map(j => cols[j] || "").join(" | ");
-        resultados.push(fila);
-      }
+            const resultados = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split("\t");
+                const fila = indices.map(j => cols[j] || "").join(" | ");
+                resultados.push(fila);
+            }
 
-      output.textContent = resultados.join("\n");
-    }
-  </script>
+            output.textContent = resultados.join("\n");
+        }
+    </script>
 </body>
 </html>
